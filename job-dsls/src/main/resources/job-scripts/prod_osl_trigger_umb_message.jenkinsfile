@@ -114,9 +114,16 @@ def getMessageBody(milestone, projectsAndVersions, imagesTags) {
 {
     "maven_repository_file_url": "${env.STAGING_SERVER_URL}/rhoss/rhoss-logic-${milestone}/openshift-serverless-logic-${milestone}-maven-repository.zip",
     "sources_file_url": "${env.STAGING_SERVER_URL}/rhoss/rhoss-logic-${milestone}/openshift-serverless-logic-${milestone}-src.zip",
-    "version": {"serverlesslogic-rhba":"${milestone}","serverlesslogic":"${projectsAndVersions["kiegroup/kogito-runtimes"]}","drools":"${projectsAndVersions["kiegroup/drools"]}","platform.quarkus.bom":"${QUARKUS_VERSION}"},
-    "image": {"data-index-ephemeral": ${imagesTags["data-index-ephemeral"]}}
+    "version": {"serverlesslogic-rhba":"${milestone}","serverlesslogic":"${projectsAndVersions["kiegroup/kogito-runtimes"]}","drools":"${projectsAndVersions["kiegroup/drools"]}","platform.quarkus.bom":"${QUARKUS_VERSION}"}
+    "${getImagesSection(imagesTags)}"
 }"""
+}
+
+def getImagesSection(imagesTags) {
+    if (env.INCLUDE_IMAGES) {
+        return ", image": {"data-index-ephemeral": ${imagesTags["data-index-ephemeral"]}}
+    }
+    return ""
 }
 
 def triggerUMBMessageJob(messageBody, milestone) {
@@ -129,9 +136,9 @@ def triggerUMBMessageJob(messageBody, milestone) {
     println "[INFO] EVENT_TYPE: ${eventType}"
     println "[INFO] Message Body: ${messageBody}"
 
-    build job: env.SEND_UMB_MESSAGE_JOB_PATH, parameters: [
-        [$class: 'StringParameterValue', name: 'MESSAGE_BODY', value: messageBody],
-        [$class: 'StringParameterValue', name: 'TOPIC', value: topic],
-        [$class: 'StringParameterValue', name: 'EVENT_TYPE', value: eventType]
-    ]
+    // build job: env.SEND_UMB_MESSAGE_JOB_PATH, parameters: [
+    //     [$class: 'StringParameterValue', name: 'MESSAGE_BODY', value: messageBody],
+    //     [$class: 'StringParameterValue', name: 'TOPIC', value: topic],
+    //     [$class: 'StringParameterValue', name: 'EVENT_TYPE', value: eventType]
+    // ]
 }
