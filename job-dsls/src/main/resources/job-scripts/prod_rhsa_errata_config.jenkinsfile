@@ -1,0 +1,42 @@
+pipeline {
+    agent {
+        label 'kie-rhel8 && !built-in'
+    }
+
+    stages {
+        stage('Clean workspace') {
+            steps {
+                cleanWs()
+            }
+        }
+
+        stage('Print variables') {
+            steps {
+                println "[INFO] ERRATA_ID: ${ERRATA_ID}"
+                println "[INFO] CHUNK_SIZE: ${CHUNK_SIZE}"
+            }
+        }
+
+        stage('Clone the repository') {
+            steps {
+                sh "git clone ${BXMS_TOOLING_REPOSITORY} bxms-tooling"
+            }
+        }
+
+        stage('Configure the RHSA Errata') {
+            steps {
+                script {
+                    dir('bxms-tooling/release_scripts') {
+                        sh "python3 SetAttributesRHSAErrata.py --verbose ${ERRATA_ID} --chunk_size ${CHUNK_SIZE}"
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            cleanWs()
+        }
+    }
+}
