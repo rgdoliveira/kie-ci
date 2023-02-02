@@ -4,7 +4,7 @@
 def scriptTemplate = this.getClass().getResource("job-scripts/prod_kogito_create_images_sources.jenkinsfile").text
 def parsedScript = scriptTemplate.replaceAll(/<%=\s*(\w+)\s*%>/) { config[it[1]] ?: '' }
 
-def folderPath = "PROD"
+def folderPath = 'PROD/rhpam-images'
 folder(folderPath)
 
 pipelineJob("${folderPath}/kogito-create-images-sources") {
