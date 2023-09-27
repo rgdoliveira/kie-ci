@@ -1,0 +1,64 @@
+@Library('jenkins-pipeline-shared-libraries')_
+
+pipeline {
+    agent {
+        label 'kie-rhel8 && !built-in'
+    }
+
+    stages {
+        stage('Clean workspace') {
+            steps {
+                cleanWs()
+            }
+        }
+
+        stage('Print variables') {
+            steps {
+                println "[INFO] REPOSITORIES: ${REPOSITORIES}"
+                println "[INFO] BRANCH: ${BRANCH}"
+                println "[INFO] SOURCE_ORGANIZATION: ${SOURCE_ORGANIZATION}"
+                println "[INFO] TARGET_ORGANIZATION: ${TARGET_ORGANIZATION}"
+            }
+        }
+
+        stage('Sync branch') {
+            steps {
+                def repositoriesList = REPOSITORIES.split(',').collect{it as String}
+                for (repository in repositoriesList) {
+                    cloneSourceRepository(repository)
+                    addTargetAsRemote(repository)
+                    pushBranch()
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            cleanWs()
+        }
+    }
+}
+
+def cloneSourceRepository(String repositoryName) {
+    def repository = !SOURCE_ORGANIZATION.equals("apache") ? repositoryName : "incubator-kie-${repositoryName}" // remove when incubator is removed from the repos name
+    def repositoryUrl = "https://github.com/${SOURCE_ORGANIZATION}/${repository}.git"
+    println "Cloning repository ${repositoryUrl}"
+    sh "git clone --branch ${BRANCH} ${repositoryUrl} ${repositoryName}"
+}
+
+def addTargetAsRemote(String repositoryName) {
+    dir (repositoryName) {
+        def remoteUrl = "https://github.com/${TARGET_ORGANIZATION}/${repositoryName}.git"
+        println "Adding ${remoteUrl} as a remote for ${repositoryName}"
+        git.addRemote(TARGET_ORGANIZATION, remoteUrl)
+    }
+}
+
+def pushBranch() {
+    dir (repositoryName) {
+        //git.removeRemoteBranch(TARGET_ORGANIZATION, BRANCH, "kie-ci3")
+        println "Pushing branch ${BRANCH} to remote ${TARGET_ORGANIZATION}"
+        git.pushObject(TARGET_ORGANIZATION, BRANCH, "kie-ci3")
+    }
+}
